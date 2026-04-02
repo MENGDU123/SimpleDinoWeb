@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>地瓜盒</title>
+    <link rel="icon" type="img/ico" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="card_main">
+        <audio controls>
+            <source src="{{ url_for('static', filename='music/' + selected_music) }}" type="audio/mpeg">
+        </audio>
+        <img src="../static/images/dino_digua.png" alt="dino digua" class="card-image">
+        <div class="card">
+            <!--随机一个句子~-->
+            <br>
+            <p class="greeting">
+                <script language="JavaScript">
+                    let quotes = [
+                        '朝武芳乃天下第一！',
+                        '地瓜服Easytier节点上线啦，不去公告页看看吗？',
+                        '你的技术是先进的，写出来的网站是拉跨的，你究竟是什么人！',
+                        '免费为终末地打个广告uwu',
+                        '最近学习了Qos，流量丢弃策略，流量限速策略……',
+                        '恭喜 森山大马户9k 先生获得哔哩哔哩十万粉丝纪念徽章!',
+                        '地瓜站与地瓜其它服务器隔离，带宽很低，需要下载请优先查看群文件。',
+                        '感谢秋语对地瓜服，对我，对大家的贡献，地瓜服永远有你的位置。',
+                        '地瓜服的Hostname由DiguaCould修改为DiguaCloud，我才不会告诉你我英语不好呢！',
+                        '善良的艾玛、纯洁的艾玛、乖孩子艾玛。'
+                    ];
+                    let randIndex = Math.floor(Math.random() * quotes.length);
+                    document.write(quotes[randIndex]);
+                </script>
+            </p>
+            <br>
+            <hr>
+            <!--这里是网页的正文~-->
+            <p>
+                <a href=".">主页</a> | <a>文章</a> | <a href="./about">关于</a>
+            </p>
+            <p class="title">Ciallo～(∠・ω<)⌒★</p>
+            <p style="text-indent: 2em;line-height: 1.8">
+                欢迎来到地瓜站！这里是 DiguaCloud 的 Site 节点，是地瓜集群中专门用于 Web 服务的节点。本站主要由笨蛋梦都维护，梦都会不定期发表一些文章、
+            更换随机音乐列表、发布服务器公告（大部分与 Home 节点的 Minecraft 服务器有关）。
+            </p>
+            <b>资源列表：</b>
+            <ul style="list-style-type: none; padding-left: 0;">
+                    {% for page in resource_file %}
+                <li style="margin: 5px 0;line-height: 1.8">
+                    <a href="{{ url_for('static', filename='resource/' + page) }}">{{ page.replace('.html', '.pdf') }}</a>
+                </li>
+                {% else %}
+                <li>唔哇，这里什么资源都没有捏 🐦······ </li>
+                {% endfor %}
+            </ul>
+            <br>
+            <p>当前装填音乐 ~ 🎶
+                <input type="text" id="musicUrlInput" value="https://www.kwymengdu.online{{ url_for('static', filename='music/' + selected_music) }}" readonly style="width: 500px;">
+                <button type="button" onclick="copyMusicUrl()">复制链接</button>
+            </p>
+            <p style="color: grey;">*左上角播放器，每次刷新会随机从后端选择一首播放。</p>
+            <script>
+                function copyMusicUrl() {
+                    var copyText = document.getElementById("musicUrlInput");
+                    copyText.select();
+                    copyText.setSelectionRange(0, 99999);
+                    document.execCommand("copy");
+                    alert("链接已复制到剪贴板！");
+                }
+            </script>
+            <hr>
+            <br>
+            <a href="https://github.com/MENGDU123" target="_blank">Github（奶酪糖·梦都）</a>
+            <span style="float: right">
+                我是合法的 <a href="https://beian.miit.gov.cn/" target="_blank">苏ICP备2025174285号-1</a>
+            </span>
+        </div>
+    </div>
+</body>

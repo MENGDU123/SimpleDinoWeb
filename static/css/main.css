@@ -1,0 +1,91 @@
+body {
+  background-image: url('../../static/images/background.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-color: #FFFFFF;
+  background-position: center;
+  background-attachment: fixed;
+  font-family: "华文细黑", "Microsoft YaHei", "STXihei", sans-serif;
+  font-size: 20px;
+}
+
+a:link {
+  color:grey;
+  text-decoration:none;
+ }
+a:visited {
+  color:grey;
+  text-decoration:none;
+  }
+a:hover {
+  color:#FFA500;
+  text-decoration:none;
+}
+
+.card_main {
+  width: 768px;
+  background-color: #F1F1F1;
+  height: auto;
+  margin: 36px auto;
+  opacity: 0.9;
+  padding: 96px;
+}
+
+.card {
+  width: auto;
+  background-color: #F1F1F1;
+  height: auto;
+}
+
+.card-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.greeting {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 100;
+}
+
+.title {
+  color: transparent;
+  background: linear-gradient(30deg, #32c5ff 25%, #b620e0 50%, #f7b500 75%, #20e050 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 300% 300%;
+  animation: gradientText 5s infinite linear;
+  text-align: center;
+  font-size: 36px;
+  margin-top: 100rpx;
+  font-weight: bolder;
+}
+
+@keyframes gradientText {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: 0.3s ease-out both fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 0.3s ease-in both fade-in;
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
