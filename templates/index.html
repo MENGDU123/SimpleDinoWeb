@@ -8,6 +8,7 @@
 </head>
 <body>
     <div class="card_main">
+        <p style="font-size: 36px;">地瓜盒 | DiguaCloud</p>
         <audio controls>
             <source src="{{ url_for('static', filename='music/' + selected_music) }}" type="audio/mpeg">
         </audio>
@@ -37,29 +38,31 @@
             <hr>
             <!--这里是网页的正文~-->
             <p>
-                <a href=".">主页</a> | <a>文章</a> | <a href="./about">关于</a>
+            <a href=".">主页</a> | <a href="./notice">文章</a> | <a href="./about">关于</a>
             </p>
             <p class="title">Ciallo～(∠・ω<)⌒★</p>
             <p style="text-indent: 2em;line-height: 1.8">
                 欢迎来到地瓜站！这里是 DiguaCloud 的 Site 节点，是地瓜集群中专门用于 Web 服务的节点。本站主要由笨蛋梦都维护，梦都会不定期发表一些文章、
             更换随机音乐列表、发布服务器公告（大部分与 Home 节点的 Minecraft 服务器有关）。
             </p>
+            <br>
             <b>资源列表：</b>
             <ul style="list-style-type: none; padding-left: 0;">
                     {% for page in resource_file %}
                 <li style="margin: 5px 0;line-height: 1.8">
-                    <a href="{{ url_for('static', filename='resource/' + page) }}">{{ page.replace('.html', '.pdf') }}</a>
+                    <a href="{{ url_for('static', filename='resource/' + page) }}">{{ page.replace('.html', '.md') }}</a>
                 </li>
                 {% else %}
                 <li>唔哇，这里什么资源都没有捏 🐦······ </li>
                 {% endfor %}
             </ul>
             <br>
+            <b>随机音乐：</b>
             <p>当前装填音乐 ~ 🎶
                 <input type="text" id="musicUrlInput" value="https://www.kwymengdu.online{{ url_for('static', filename='music/' + selected_music) }}" readonly style="width: 500px;">
                 <button type="button" onclick="copyMusicUrl()">复制链接</button>
             </p>
-            <p style="color: grey;">*左上角播放器，每次刷新会随机从后端选择一首播放。</p>
+            <p style="color: grey;">*标题下方的播放器会在每次刷新后随机从后端选择一首乐曲播放。</p>
             <script>
                 function copyMusicUrl() {
                     var copyText = document.getElementById("musicUrlInput");

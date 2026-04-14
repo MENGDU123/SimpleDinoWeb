@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>地瓜盒</title>
+    <link rel="icon" type="img/ico" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="card_main">
+        <p style="font-size: 36px;">地瓜盒 | DiguaCloud</p>
+        <img src="../static/images/dino_digua.png" alt="dino digua" class="card-image">
+        <div class="card">
+            <p>
+                <a href=".">主页</a> >> 文章
+            </p>
+            <ul style="list-style-type: none; padding-left: 0;">
+                {% for blog, time_str in notice_files %}
+                <li style="margin: 5px 0;line-height: 1.8">
+                    <!-- 文档目录 -->
+                    <a href="{{ url_for('static', filename='notice/' + blog) }}">🖊 {{ blog }}</a>
+                    <span style="color: #666; font-size: 12px; float: right;">{{ time_str }}</span>
+                    <hr style="border: 1px dashed #DCDCDC; width: 100%; height: 1px;">
+                </li>
+                {% else %}
+                <li>唔哇，这里什么资源都没有捏 🐦······ </li>
+                {% endfor %}
+            </ul>
+
+            <!-- 分页 -->
+            {% if total_pages > 1 %}
+            <div style="margin-top: 20px; text-align: center;">
+                {% if page > 1 %}
+                    <a href="{{ url_for('notice', page=page-1) }}">上一页</a>
+                {% endif %}
+                <span> 第 {{ page }} / {{ total_pages }} 页 </span>
+                {% if page < total_pages %}
+                    <a href="{{ url_for('notice', page=page+1) }}">下一页</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <hr>
+            <br>
+            <a href="https://github.com/MENGDU123" target="_blank">Github（奶酪糖·梦都）</a>
+            <span style="float: right">
+                我是合法的 <a href="https://beian.miit.gov.cn/" target="_blank">苏ICP备2025174285号-1</a>
+            </span>
+        </div>
+    </div>
+</body>

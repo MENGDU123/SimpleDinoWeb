@@ -24,16 +24,25 @@ a:hover {
 
 .card_main {
   width: 768px;
-  background-color: #F1F1F1;
+  background-color: #FFFFFF;
   height: auto;
   margin: 36px auto;
-  opacity: 0.9;
+  opacity: 0.96;
   padding: 96px;
+  padding-top: 48px;
+}
+
+.card_about {
+  width: 768px;
+  background-color: #FFFFFF;
+  height: auto;
+  margin: 36px auto;
+  padding: 64px;
 }
 
 .card {
   width: auto;
-  background-color: #F1F1F1;
+  background-color: #FFFFFF;
   height: auto;
 }
 
@@ -89,3 +98,4 @@ a:hover {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+

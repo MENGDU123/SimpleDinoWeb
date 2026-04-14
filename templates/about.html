@@ -5,16 +5,44 @@
     <title>地瓜盒</title>
     <link rel="icon" type="img/ico" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        img[src="https://avatars.githubusercontent.com/u/202890051?v=4"] {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 50% !important;
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.2);
+            border: 3px solid #fef3e2;
+            transition: transform 0.25s ease, box-shadow 0.2s;
+            opacity: 1 !important;
+        }
+    </style>
 </head>
 <body>
     <div class="card_main">
+        <p style="font-size: 36px;">地瓜盒 | DiguaCloud</p>
         <img src="../static/images/dino_digua.png" alt="dino digua" class="card-image">
         <div class="card">
             <p>
                 <a href="..">主页</a> >> 关于
             </p>
             <p class="title">Desgin by 奶酪糖·梦都</p>
-            <p>一只即将步入社会的笨蛋小猫。</p>
+            <img alt="" src="https://avatars.githubusercontent.com/u/202890051?v=4" width="260" height="260">
+            <p style="text-align:center;color:grey;">一只即将步入社会的笨蛋小猫。</p>
+            <br>
+            <p style="text-indent: 2em;line-height: 1.8">
+                “不知不觉，已经走了很远了，翻过了一座有一座山，跨过了一条又一条河。终究是要成长的，这些路上的风景是永远不会忘记的。”
+            </p>
+            <br>
+            <hr>
+            <br>
+            <a href="https://github.com/MENGDU123" target="_blank">Github（奶酪糖·梦都）</a>
+            |
+            <!--不允许删除下面这一行！-->
+            <a href="https://github.com/MENGDU123/SimpleDinoWeb" target="_blank">🔗本站源码</a>
+            <span style="float: right">
+                我是合法的 <a href="https://beian.miit.gov.cn/" target="_blank">苏ICP备2025174285号-1</a>
+            </span>
         </div>
     </div>
 </body>
