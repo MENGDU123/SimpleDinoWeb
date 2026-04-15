@@ -1,6 +1,9 @@
 from flask import Flask,render_template,request
+from importlib.metadata import version
+from optparse import OptionParser
 from datetime import datetime
 import random
+import sys
 import os
 
 app = Flask(__name__)
@@ -20,7 +23,7 @@ def index():
         if music_files:
             selected_music = random.choice(music_files)
         else:
-            raise FileNotFoundError("Music file not found!")
+            raise FileNotFoundError("Music file is None!")
             #如果内容为空，抛出错误，停止运行。
 
     #读取/static/resource目录
@@ -64,14 +67,54 @@ def notice():
         page = total_pages
     start = (page - 1) * PER_PAGE
     end = start + PER_PAGE
-    page_files = file_info[start:end]   # 分页后的列表，每个元素是 (文件名, 时间字符串)
+    page_files = file_info[start:end]   # 分页后的列表
 
     return render_template('notice.html', notice_files=page_files, page=page, total_pages=total_pages)
-
 
 @app.route('/about')
 def about():
     return render_template('about.html')
 
+@app.route('/hidden')
+def hidden():
+    #隐藏页-系统信息
+    flask_info = version('flask')
+    python_info = sys.version
+    app_info = "SimpleDinoWeb Version: 26.4.0 (Design by Cream_MENGDU.)"
+    #读取/static/hidden文件夹
+    hidden_folder = os.path.join(app.config['upload_dir'], 'hidden')
+    hidden_files = []
+    if os.path.isdir(hidden_folder):
+        for filename in os.listdir(hidden_folder):
+            file_path = os.path.join(hidden_folder, filename)
+            if os.path.isfile(file_path):
+                hidden_files.append(filename)
+        hidden_files.sort()
+
+    return render_template(
+        'hidden.html',
+        flask_info=flask_info,python_info=python_info,app_info=app_info,
+        hidden_files=hidden_files
+    )
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000,debug=True)
+    parser = OptionParser()
+    parser.add_option("-i", "--ip", dest="ip", type="string",help="listen address",default="0.0.0.0")
+    parser.add_option("-p", "--port", dest="port", type="int",help="port number",default="5000")
+    parser.add_option("-d", "--debug", dest="debug", action="store_true",help="enable debug mode")
+    parser.add_option("-v", "--version", dest="version_info",action="store_true",help="show version information")
+    (options, args) = parser.parse_args()
+
+    if options.version_info:
+        print(f"Flask Version: {version('flask')}")
+        print(f"Python Version: {sys.version}")
+        print("SimpleDinoWeb Version: 26.4.0 (Design by Cream_MENGDU.)")
+        sys.exit(0)
+
+    if options.debug:
+        debug = True
+    else:
+        debug = False
+
+    print("Please use nginx to proxy the application, or use a WSGI server directly..")
+    app.run(host=options.ip, port=options.port,debug=debug)

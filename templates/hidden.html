@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>地瓜盒</title>
+    <link rel="icon" type="img/ico" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="card_main">
+        <p style="font-size: 36px;">地瓜盒 | DiguaCloud</p>
+        <img src="../static/images/dino_digua.png" alt="dino digua" class="card-image">
+        <div class="card">
+            <p>
+                <a href="..">主页</a> >> 隐藏页
+                <p>Flask Version: {{flask_info}}</p>
+                <p>Python Version: {{python_info}}</p>
+                <p>{{app_info}}</p>
+                <hr>
+                <br>
+                <a href="https://github.com/MENGDU123" target="_blank">Github（奶酪糖·梦都）</a>
+                <span style="float: right">
+                    我是合法的 <a href="https://beian.miit.gov.cn/" target="_blank">苏ICP备2025174285号-1</a>
+                </span>
+            </p>
+        </div>
+    </div>
+    <div class="card_main">
+        <br>
+        <div class="card">
+
+        </div>
+    </div>
+</body>
