@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>地瓜盒</title>
+    <link rel="icon" type="img/ico" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        body {
+            background: #FFFFFF;
+            margin: 0;
+            text-align: center;
+            font-family: "华文细黑", "Microsoft YaHei", "STXihei", sans-serif;
+        }
+
+        .card {
+            background: #FFFFB0;
+            padding: 16px;
+            line-height: 0;
+            display: inline-block;
+            margin-top: 10vh;
+        }
+    </style>
+</head>
+<body>
+    <br>
+    <div class="card">
+        <img src="../static/images/abandon.jpg">
+    </div>
+    <p style="font-size: 36px;">{{error_title}}</p>
+    <p>{{error_info}}</p>
+</body>
+</html>

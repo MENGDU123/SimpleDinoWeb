@@ -1,4 +1,4 @@
-from flask import Flask,render_template,request
+from flask import Flask,render_template,request,abort
 from importlib.metadata import version
 from optparse import OptionParser
 from datetime import datetime
@@ -81,7 +81,8 @@ def about():
 def hidden():
     #如果启动参数没有-e或者--extra，返回403
     if not options.hidden:
-        return render_template("abandon.html")
+        abort(403)
+
     #隐藏页-系统信息
     flask_info = version('flask')
     python_info = sys.version
@@ -109,6 +110,17 @@ def hidden():
         cpu_percent = cpu_percent,memory = memory,
         hidden_files = hidden_files
     )
+@app.errorhandler(404)
+def page_not_found(error):
+    error_title = "404 Not Found!"
+    error_info = "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."
+    return render_template("abandon.html",error_info = error_info,error_title = error_title),404
+
+@app.errorhandler(403)
+def forbidden(error):
+    error_title = "403 Forbidden!"
+    error_info = "You don't have the permission to access the requested resource. It is either read-protected or not readable by the server."
+    return render_template("abandon.html",error_info = error_info,error_title = error_title),403
 
 if __name__ == '__main__':
     parser = OptionParser()
