@@ -2,6 +2,8 @@ from flask import Flask,render_template,request
 from importlib.metadata import version
 from optparse import OptionParser
 from datetime import datetime
+import platform
+import psutil
 import random
 import sys
 import os
@@ -46,7 +48,7 @@ def notice():
     if os.path.isdir(notice_folder):
         for filename in os.listdir(notice_folder):
             try:
-                if filename.endswith(".html") or filename.endswith(".md"):
+                if filename.endswith(".html") or filename.endswith(".pdf"):
                     filepath = os.path.join(notice_folder, filename)
                     mtime = os.path.getmtime(filepath)
                     time_str = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M')
@@ -77,10 +79,19 @@ def about():
 
 @app.route('/hidden')
 def hidden():
+    #如果启动参数没有-e或者--extra，返回403
+    if not options.hidden:
+        return render_template("abandon.html")
     #隐藏页-系统信息
     flask_info = version('flask')
     python_info = sys.version
     app_info = "SimpleDinoWeb Version: 26.4.0 (Design by Cream_MENGDU.)"
+    #隐藏页-运行状态
+    system_name = platform.system()
+    system_release = platform.release()
+    system_machine = platform.machine()
+    cpu_percent = psutil.cpu_percent(interval=1, percpu=True)
+    memory = psutil.virtual_memory()
     #读取/static/hidden文件夹
     hidden_folder = os.path.join(app.config['upload_dir'], 'hidden')
     hidden_files = []
@@ -94,7 +105,9 @@ def hidden():
     return render_template(
         'hidden.html',
         flask_info=flask_info,python_info=python_info,app_info=app_info,
-        hidden_files=hidden_files
+        system_name=system_name,system_release=system_release,system_machine=system_machine,
+        cpu_percent = cpu_percent,memory = memory,
+        hidden_files = hidden_files
     )
 
 if __name__ == '__main__':
@@ -102,6 +115,7 @@ if __name__ == '__main__':
     parser.add_option("-i", "--ip", dest="ip", type="string",help="listen address",default="0.0.0.0")
     parser.add_option("-p", "--port", dest="port", type="int",help="port number",default="5000")
     parser.add_option("-d", "--debug", dest="debug", action="store_true",help="enable debug mode")
+    parser.add_option("-e","--extra",dest="hidden",action="store_true",help="show hidden page")
     parser.add_option("-v", "--version", dest="version_info",action="store_true",help="show version information")
     (options, args) = parser.parse_args()
 
@@ -109,12 +123,8 @@ if __name__ == '__main__':
         print(f"Flask Version: {version('flask')}")
         print(f"Python Version: {sys.version}")
         print("SimpleDinoWeb Version: 26.4.0 (Design by Cream_MENGDU.)")
+        #如果参数里包含-v或者--version，只输出版本信息而不启动。
         sys.exit(0)
 
-    if options.debug:
-        debug = True
-    else:
-        debug = False
-
     print("Please use nginx to proxy the application, or use a WSGI server directly..")
-    app.run(host=options.ip, port=options.port,debug=debug)
+    app.run(host=options.ip, port=options.port,debug=options.debug)

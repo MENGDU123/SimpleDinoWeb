@@ -11,11 +11,16 @@
         <p style="font-size: 36px;">地瓜盒 | DiguaCloud</p>
         <img src="../static/images/dino_digua.png" alt="dino digua" class="card-image">
         <div class="card">
-            <p>
-                <a href="..">主页</a> >> 隐藏页
+            <p><a href="..">主页</a> >> 隐藏页</p>
+                <b>----- Website Info -----</b>
                 <p>Flask Version: {{flask_info}}</p>
                 <p>Python Version: {{python_info}}</p>
                 <p>{{app_info}}</p>
+                <br>
+                <b>----- System Info -----</b>
+                <p>{{system_name}} {{system_release}} {{system_machine}};</p>
+                <p>CPU：{{cpu_percent}}</p>
+                <p>Memory：{{memory}}</p>
                 <hr>
                 <br>
                 <a href="https://github.com/MENGDU123" target="_blank">Github（奶酪糖·梦都）</a>
@@ -28,7 +33,21 @@
     <div class="card_main">
         <br>
         <div class="card">
-
+            <p style="font-size: 36px;">日志下载</p>
+            <p>日志功能请使用user_args.txt启动，直接启动是没有日志功能的。</p>
+            <hr>
+            <ul style="list-style-type: none; padding-left: 0;">
+                {% for page in hidden_files %}
+                <li style="margin: 5px 0;line-height: 1.8">
+                    <a href="{{ url_for('static', filename='hidden/' + page) }}">{{ page }}</a>
+                </li>
+                {% else %}
+                <li>唔哇，这里什么资源都没有捏 🐦······ </li>
+                {% endfor %}
+            </ul>
+            <hr>
+            <br>
+            <p style="color:grey">*此页面仅供调试，生产环境请勿使用--extra与--debug参数启动。</p>
         </div>
     </div>
 </body>

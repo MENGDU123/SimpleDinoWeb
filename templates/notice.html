@@ -18,7 +18,7 @@
                 {% for blog, time_str in notice_files %}
                 <li style="margin: 5px 0;line-height: 1.8">
                     <!-- 文档目录 -->
-                    <a href="{{ url_for('static', filename='notice/' + blog) }}">🖊 {{ blog }}</a>
+                    <a href="{{ url_for('static', filename='notice/' + blog) }}" target="_blank">🖊 {{ blog }}</a>
                     <span style="color: #666; font-size: 12px; float: right;">{{ time_str }}</span>
                     <hr style="border: 1px dashed #DCDCDC; width: 100%; height: 1px;">
                 </li>

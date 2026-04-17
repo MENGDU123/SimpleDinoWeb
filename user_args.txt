@@ -1,0 +1,9 @@
+# Options:
+#  -h, --help            show this help message and exit
+#  -i IP, --ip=IP        listen address
+#  -p PORT, --port=PORT  port number
+#  -d, --debug           enable debug mode
+#  -e, --extra           show hidden page
+#  -v, --version         show version information
+
+--debug --extra
