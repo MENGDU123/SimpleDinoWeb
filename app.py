@@ -73,6 +73,38 @@ def notice():
 
     return render_template('notice.html', notice_files=page_files, page=page, total_pages=total_pages)
 
+@app.route('/nuoshui')
+def nuoshui():
+    #与文章页完全一致，不过遍历的目录不同
+    nuoshui_folder = os.path.join(app.config['upload_dir'], 'nuoshui')
+    file_info = []
+    if os.path.isdir(nuoshui_folder):
+        for filename in os.listdir(nuoshui_folder):
+            try:
+                if filename.endswith(".pdf"):
+                    filepath = os.path.join(nuoshui_folder, filename)
+                    mtime = os.path.getmtime(filepath)
+                    time_str = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M')
+                    file_info.append((filename, time_str))
+            except FileNotFoundError:
+                continue
+        file_info.sort(key=lambda x: os.path.getmtime(os.path.join(nuoshui_folder, x[0])), reverse=True)
+
+    #分页
+    PER_PAGE = 20
+    page = request.args.get('page', 1, type=int)
+    total = len(file_info)
+    total_pages = (total + PER_PAGE - 1) // PER_PAGE if total > 0 else 1
+    if page < 1:
+        page = 1
+    if page > total_pages and total_pages > 0:
+        page = total_pages
+    start = (page - 1) * PER_PAGE
+    end = start + PER_PAGE
+    page_files = file_info[start:end]
+
+    return render_template('nuoshui.html', nuoshui_files=page_files, page=page, total_pages=total_pages)
+
 @app.route('/about')
 def about():
     return render_template('about.html')
@@ -110,6 +142,7 @@ def hidden():
         cpu_percent = cpu_percent,memory = memory,
         hidden_files = hidden_files
     )
+
 @app.errorhandler(404)
 def page_not_found(error):
     error_title = "404 Not Found!"
