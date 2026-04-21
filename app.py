@@ -3,6 +3,7 @@ from importlib.metadata import version
 from optparse import OptionParser
 from datetime import datetime
 import platform
+import textwrap
 import psutil
 import random
 import sys
@@ -109,6 +110,17 @@ def nuoshui():
 def about():
     return render_template('about.html')
 
+#君子协议
+@app.route('/robots.txt')
+def robots_txt():
+    content = textwrap.dedent("""
+        User-agent: *
+        Disallow: /
+        Allow: /$
+        Allow: /about$
+    """).strip()
+    return content, 200, {'Content-Type': 'text/plain'}
+
 @app.route('/hidden')
 def hidden():
     #如果启动参数没有-e或者--extra，返回403
@@ -154,6 +166,7 @@ def forbidden(error):
     error_title = "403 Forbidden!"
     error_info = "You don't have the permission to access the requested resource. It is either read-protected or not readable by the server."
     return render_template("abandon.html",error_info = error_info,error_title = error_title),403
+
 
 if __name__ == '__main__':
     parser = OptionParser()

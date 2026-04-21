@@ -1,7 +1,7 @@
-
-static/resource/Submerged 2-B6.1-dg.zip
+.venv/
 static/resource/
 static/nuoshui/
 static/hidden/
 .idea/
 static/music/
+user_args.txt
