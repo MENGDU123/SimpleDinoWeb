@@ -115,9 +115,9 @@ def about():
 def robots_txt():
     content = textwrap.dedent("""
         User-agent: *
-        Disallow: /
         Allow: /$
         Allow: /about$
+        Disallow: /
     """).strip()
     return content, 200, {'Content-Type': 'text/plain'}
 
