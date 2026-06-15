@@ -5,6 +5,7 @@
     <title>地瓜盒</title>
     <link rel="icon" type="img/ico" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="{{ url_for('static', filename='js/cookie.js') }}"></script>
 </head>
 <body>
     <div class="card_main">
@@ -19,16 +20,17 @@
             <p class="greeting">
                 <script language="JavaScript">
                     let quotes = [
-                        '慎用Easytier组网工具，我不想再损失任何一个节点了。',
-                        '永远怀恋Neko节点，死于对等网络封禁。',
+                        '“汪汪汪！”——茉子',
+                        '“主人，吃我一记天罚！”——绿色停机坪',
                         '你的技术是先进的，写出来的网站是拉跨的，你究竟是什么人！',
-                        '已经有HCIP-Datacom，接下来考RHCE，最后再来个CKA，我就美满了。',
+                        'B r a v e m a n，和奏已经等不及了。',
                         '灌注可爱的梦都喵。',
                         '给茉子一个有地将臣，她能照顾好闺蜜整晚的高质量睡眠。',
                         '朝武芳乃天下第一！',
                         '草莓草莓，你的小手放在哪里呀？',
                         '“我可是高性能的！”——ATRL',
-                        '善良的艾玛、纯洁的艾玛、乖孩子艾玛。'
+                        '善良的艾玛、纯洁的艾玛、乖孩子艾玛。',
+                        '我是网工，我是运维，我不是程序员！'
                     ];
                     let randIndex = Math.floor(Math.random() * quotes.length);
                     document.write(quotes[randIndex]);
@@ -58,9 +60,13 @@
                 {% else %}
                 <li>唔哇，这里什么资源都没有捏 🐦······ </li>
                 {% endfor %}
-                <li>当前 ~ <a href="https://home.kwymengdu.online:22240/TerraFirmaRebirth_3.1.2_Release.zip">[群峦传说]TerraFirmaRebirth_3.1.2.zip</a>（受限下载）</li>
+                <li>当前 ~ <a href="https://home.kwymengdu.online:22240/">[Digua13]_NeoCiv</a>（正在制作...）</li>
             </ul>
-            <p>*服务器地址详见群公告（请关注B站~<a href="https://space.bilibili.com/795943?spm_id_from=333.337.0.0" target="_blank">森山大马户9k</a>，群号详见视频详情。）</p>
+            <br>
+            <b>友谊链接：</b>
+            <p>🪄喜欢魔法少女请关注B站~<a href="https://www.bilibili.com/read/readlist/rl1061728?spm_id_from=333.1387.0.0" target="_blank">浅水咲</a>，我们都称呼他为Saki！</p>
+            <p>✨我有一个写代码很厉害的朋友：<a href="https://mygo.plus/" target="_blank">Peter2500zz</a>，晴雨表mygo.plus。</p>
+            <p style="color: grey;">*ps: 真的，你看完他的网站之后你会觉得本站拉完了。（因为我是一个网工，术业有专攻...MPLS、SRv6了解一下？）</p>
             <br>
             <b>随机音乐：</b>
             <p>当前装填音乐 ~ 🎶
