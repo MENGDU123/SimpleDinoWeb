@@ -1,15 +1,117 @@
-from flask import Flask,render_template,request,abort
+import time
+import threading
+import random
+import json
+import requests
+from concurrent.futures import ThreadPoolExecutor
+
+from flask import Flask, render_template, request, abort, jsonify
 from importlib.metadata import version
 from optparse import OptionParser
 from datetime import datetime
 import platform
 import textwrap
 import psutil
-import random
 import sys
 import os
 
 app = Flask(__name__)
+
+#友链心跳配置
+HEARTBEAT_INTERVAL = 30
+HEARTBEAT_JITTER = 15 #抖动时长
+CHECK_TIMEOUT = 5
+MAX_WORKERS = 4
+
+#存放状态缓存
+_friend_cache = {}
+_cache_lock = threading.Lock()
+_stop_event = threading.Event()
+
+#读取友谊链接
+def _check_one(link):
+    try:
+        start = time.perf_counter()
+        r = requests.get(link['url'], timeout=CHECK_TIMEOUT, allow_redirects=True)
+        ms = (time.perf_counter() - start) * 1000
+        return link['url'], f"[{r.status_code} {round(ms)}ms]"
+    except Exception:
+        return link['url'], "[离线]"
+
+def _heartbeat_loop():
+    """后台线程：每隔 HEARTBEAT_INTERVAL 秒刷新一次友链状态到缓存。"""
+    while not _stop_event.is_set():
+        links = load_friend_links()          # 每轮都读一次，改 JSON 后下一轮即生效
+        if links:
+            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+                results = list(pool.map(_check_one, links))
+
+            now = time.time()
+            valid_urls = {link['url'] for link in links}
+            with _cache_lock:
+                for url, status in results:
+                    _friend_cache[url] = {'status': status, 'checked_at': now}
+                #清理已经从 JSON 里删掉的旧条目，防止缓存无限增长
+                for url in list(_friend_cache):
+                    if url not in valid_urls:
+                        del _friend_cache[url]
+
+        # 睡到下一轮，加随机抖动
+        sleep_time = HEARTBEAT_INTERVAL + random.uniform(-HEARTBEAT_JITTER, HEARTBEAT_JITTER)
+        if _stop_event.wait(sleep_time):
+            break
+
+def start_heartbeat():
+    """启动友链心跳线程。"""
+    t = threading.Thread(target=_heartbeat_loop, name='friend-heartbeat', daemon=True)
+    t.start()
+    return t
+
+#定义友链数据
+FRIEND_LINKS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'friendship_links.json')
+
+#友链文件缓存：按 mtime 判断是否需要重新解析
+_friend_links_cache = {'data': [], 'mtime': None}
+_friend_links_lock = threading.Lock()
+
+def load_friend_links():
+    try:
+        mtime = os.path.getmtime(FRIEND_LINKS_FILE)
+    except OSError:
+        #文件不存在则视为空列表
+        return []
+
+    with _friend_links_lock:
+        if _friend_links_cache['mtime'] == mtime:
+            return _friend_links_cache['data']
+
+    try:
+        with open(FRIEND_LINKS_FILE, 'r', encoding='utf-8') as f:
+            raw = json.load(f)
+    except (OSError, FileNotFoundError, ValueError):
+        with _friend_links_lock:
+            return _friend_links_cache['data']
+
+    if isinstance(raw, dict):
+        raw = raw.get('links', [])
+    if not isinstance(raw, list):
+        raw = []
+
+    links = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get('name', '')).strip()
+        url = str(item.get('url', '')).strip()
+        desc = str(item.get('desc', '')).strip()
+        if not name or not url:
+            continue
+        links.append({'name': name, 'url': url, 'desc': desc})
+
+    with _friend_links_lock:
+        _friend_links_cache['data'] = links
+        _friend_links_cache['mtime'] = mtime
+    return links
 
 app.config['upload_dir'] = 'static'
 @app.route('/')
@@ -40,7 +142,19 @@ def index():
                 resource_files.append(filename)
         resource_files.sort()
 
-    return render_template('index.html',selected_music = selected_music,resource_file = resource_files)
+    # 读取友链（JSON 实时读取，状态只读缓存）
+    friend_links_with_status = []
+    with _cache_lock:
+        friend_status = {url: info['status'] for url, info in _friend_cache.items()}
+    for link in load_friend_links():
+        friend_links_with_status.append({
+            'name': link['name'],
+            'url': link['url'],
+            'desc': link['desc'],
+            'status': friend_status.get(link['url'], '[未知]')
+        })
+
+    return render_template('index.html',selected_music = selected_music,resource_file = resource_files, friend_links = friend_links_with_status)
 
 @app.route('/notice')
 def notice():
@@ -130,7 +244,7 @@ def hidden():
     #隐藏页-系统信息
     flask_info = version('flask')
     python_info = sys.version
-    app_info = "SimpleDinoWeb Version: 26.4.0 (Design by Cream_MENGDU.)"
+    app_info = "SimpleDinoWeb Version: 26.9.28b (Design by Cream_MENGDU.)"
     #隐藏页-运行状态
     system_name = platform.system()
     system_release = platform.release()
@@ -180,9 +294,14 @@ if __name__ == '__main__':
     if options.version_info:
         print(f"Flask Version: {version('flask')}")
         print(f"Python Version: {sys.version}")
-        print("SimpleDinoWeb Version: 26.4.0 (Design by Cream_MENGDU.)")
+        print("SimpleDinoWeb Version: 26.9.28b (Design by Cream_MENGDU.)")
         #如果参数里包含-v或者--version，只输出版本信息而不启动。
         sys.exit(0)
 
+    if not options.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        start_heartbeat()
+
     print("Please use nginx to proxy the application, or use a WSGI server directly..")
     app.run(host=options.ip, port=options.port,debug=options.debug)
+
+
