@@ -1,20 +1,62 @@
 import time
-from asyncio import timeout
+import threading
+import random
+import requests
+from concurrent.futures import ThreadPoolExecutor
 
-from flask import Flask,render_template,request,abort,jsonify
+from flask import Flask, render_template, request, abort, jsonify
 from importlib.metadata import version
 from optparse import OptionParser
 from datetime import datetime
 import platform
 import textwrap
-import requests
 import psutil
-import random
-import time
 import sys
 import os
 
 app = Flask(__name__)
+
+#友链心跳配置
+HEARTBEAT_INTERVAL = 30
+HEARTBEAT_JITTER = 15 #抖动时长
+CHECK_TIMEOUT = 5
+MAX_WORKERS = 4
+
+#存放状态缓存
+_friend_cache = {}
+_cache_lock = threading.Lock()
+_stop_event = threading.Event()
+
+#读取友谊链接
+def _check_one(link):
+    try:
+        start = time.perf_counter()
+        r = requests.get(link['url'], timeout=CHECK_TIMEOUT, allow_redirects=True)
+        ms = (time.perf_counter() - start) * 1000
+        return link['url'], f"[{r.status_code} {round(ms)}ms]"
+    except Exception:
+        return link['url'], "[离线]"
+
+def _heartbeat_loop():
+    """后台线程：每隔 HEARTBEAT_INTERVAL 秒刷新一次友链状态到缓存。"""
+    while not _stop_event.is_set():
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+            results = list(pool.map(_check_one, FRIEND_LINKS))
+
+        now = time.time()
+        with _cache_lock:
+            for url, status in results:
+                _friend_cache[url] = {'status': status, 'checked_at': now}
+        # 睡到下一轮，加随机抖动
+        sleep_time = HEARTBEAT_INTERVAL + random.uniform(-HEARTBEAT_JITTER, HEARTBEAT_JITTER)
+        if _stop_event.wait(sleep_time):
+            break
+
+def start_heartbeat():
+    """启动友链心跳线程。"""
+    t = threading.Thread(target=_heartbeat_loop, name='friend-heartbeat', daemon=True)
+    t.start()
+    return t
 
 #定义友链数据
 FRIEND_LINKS = [
@@ -64,24 +106,18 @@ def index():
                 resource_files.append(filename)
         resource_files.sort()
 
-    #取得友谊链接的状态。——在这里插入
-    friend_links_with_status = []
-    for link in FRIEND_LINKS:
-        try:
-            start = time.perf_counter()
-            r = requests.get(link['url'], timeout=5, allow_redirects=True)
-            ms = (time.perf_counter() - start) * 1000
-            status = f"[{r.status_code} {round(ms)}ms]"
-        except Exception as e:
-            print(f"检测友链 {link['url']} 失败: {e}")
-            status = "[离线]"
-
-        friend_links_with_status.append({
-            'name': link['name'],
-            'url': link['url'],
-            'desc': link['desc'],
-            'status': status
-        })
+    #读取友链状态（只读缓存）
+    with _cache_lock:
+        friend_links_with_status = []
+        for link in FRIEND_LINKS:
+            cached = _friend_cache.get(link['url'])
+            status = cached['status'] if cached else '[未知]'
+            friend_links_with_status.append({
+                'name': link['name'],
+                'url': link['url'],
+                'desc': link['desc'],
+                'status': status
+            })
 
     return render_template('index.html',selected_music = selected_music,resource_file = resource_files, friend_links = friend_links_with_status)
 
@@ -227,5 +263,10 @@ if __name__ == '__main__':
         #如果参数里包含-v或者--version，只输出版本信息而不启动。
         sys.exit(0)
 
+    if not options.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        start_heartbeat()
+
     print("Please use nginx to proxy the application, or use a WSGI server directly..")
     app.run(host=options.ip, port=options.port,debug=options.debug)
+
+
