@@ -1,6 +1,7 @@
 import time
 import threading
 import random
+import json
 import requests
 from concurrent.futures import ThreadPoolExecutor
 
@@ -40,13 +41,21 @@ def _check_one(link):
 def _heartbeat_loop():
     """后台线程：每隔 HEARTBEAT_INTERVAL 秒刷新一次友链状态到缓存。"""
     while not _stop_event.is_set():
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-            results = list(pool.map(_check_one, FRIEND_LINKS))
+        links = load_friend_links()          # 每轮都读一次，改 JSON 后下一轮即生效
+        if links:
+            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+                results = list(pool.map(_check_one, links))
 
-        now = time.time()
-        with _cache_lock:
-            for url, status in results:
-                _friend_cache[url] = {'status': status, 'checked_at': now}
+            now = time.time()
+            valid_urls = {link['url'] for link in links}
+            with _cache_lock:
+                for url, status in results:
+                    _friend_cache[url] = {'status': status, 'checked_at': now}
+                #清理已经从 JSON 里删掉的旧条目，防止缓存无限增长
+                for url in list(_friend_cache):
+                    if url not in valid_urls:
+                        del _friend_cache[url]
+
         # 睡到下一轮，加随机抖动
         sleep_time = HEARTBEAT_INTERVAL + random.uniform(-HEARTBEAT_JITTER, HEARTBEAT_JITTER)
         if _stop_event.wait(sleep_time):
@@ -59,23 +68,50 @@ def start_heartbeat():
     return t
 
 #定义友链数据
-FRIEND_LINKS = [
-    {
-        'name': '浅水咲',
-        'url': 'https://www.bilibili.com/read/readlist/rl1061728?spm_id_from=333.1387.0.0',
-        'desc': '🪄喜欢魔法少女请关注B站~我们都称呼他为Saki！'
-    },
-    {
-        'name': 'peter2500zz',
-        'url': 'https://mygo.plus/',
-        'desc': '✨我有一个写代码很厉害的朋友，晴雨表mygo.plus。'
-    },
-    {
-        'name': 'Yasaitori',
-        'url': 'https://yatori.cc',
-        'desc': '🐟喜欢摸鱼，擅长睡觉，Toriest。'
-    }
-]
+FRIEND_LINKS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'friendship_links.json')
+
+#友链文件缓存：按 mtime 判断是否需要重新解析
+_friend_links_cache = {'data': [], 'mtime': None}
+_friend_links_lock = threading.Lock()
+
+def load_friend_links():
+    try:
+        mtime = os.path.getmtime(FRIEND_LINKS_FILE)
+    except OSError:
+        #文件不存在则视为空列表
+        return []
+
+    with _friend_links_lock:
+        if _friend_links_cache['mtime'] == mtime:
+            return _friend_links_cache['data']
+
+    try:
+        with open(FRIEND_LINKS_FILE, 'r', encoding='utf-8') as f:
+            raw = json.load(f)
+    except (OSError, FileNotFoundError, ValueError):
+        with _friend_links_lock:
+            return _friend_links_cache['data']
+
+    if isinstance(raw, dict):
+        raw = raw.get('links', [])
+    if not isinstance(raw, list):
+        raw = []
+
+    links = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get('name', '')).strip()
+        url = str(item.get('url', '')).strip()
+        desc = str(item.get('desc', '')).strip()
+        if not name or not url:
+            continue
+        links.append({'name': name, 'url': url, 'desc': desc})
+
+    with _friend_links_lock:
+        _friend_links_cache['data'] = links
+        _friend_links_cache['mtime'] = mtime
+    return links
 
 app.config['upload_dir'] = 'static'
 @app.route('/')
@@ -106,18 +142,17 @@ def index():
                 resource_files.append(filename)
         resource_files.sort()
 
-    #读取友链状态（只读缓存）
+    # 读取友链（JSON 实时读取，状态只读缓存）
+    friend_links_with_status = []
     with _cache_lock:
-        friend_links_with_status = []
-        for link in FRIEND_LINKS:
-            cached = _friend_cache.get(link['url'])
-            status = cached['status'] if cached else '[未知]'
-            friend_links_with_status.append({
-                'name': link['name'],
-                'url': link['url'],
-                'desc': link['desc'],
-                'status': status
-            })
+        friend_status = {url: info['status'] for url, info in _friend_cache.items()}
+    for link in load_friend_links():
+        friend_links_with_status.append({
+            'name': link['name'],
+            'url': link['url'],
+            'desc': link['desc'],
+            'status': friend_status.get(link['url'], '[未知]')
+        })
 
     return render_template('index.html',selected_music = selected_music,resource_file = resource_files, friend_links = friend_links_with_status)
 
