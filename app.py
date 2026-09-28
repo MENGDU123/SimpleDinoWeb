@@ -1,15 +1,39 @@
-from flask import Flask,render_template,request,abort
+import time
+from asyncio import timeout
+
+from flask import Flask,render_template,request,abort,jsonify
 from importlib.metadata import version
 from optparse import OptionParser
 from datetime import datetime
 import platform
 import textwrap
+import requests
 import psutil
 import random
+import time
 import sys
 import os
 
 app = Flask(__name__)
+
+#定义友链数据
+FRIEND_LINKS = [
+    {
+        'name': '浅水咲',
+        'url': 'https://www.bilibili.com/read/readlist/rl1061728?spm_id_from=333.1387.0.0',
+        'desc': '🪄喜欢魔法少女请关注B站~我们都称呼他为Saki！'
+    },
+    {
+        'name': 'peter2500zz',
+        'url': 'https://mygo.plus/',
+        'desc': '✨我有一个写代码很厉害的朋友，晴雨表mygo.plus。'
+    },
+    {
+        'name': 'Yasaitori',
+        'url': 'https://yatori.cc',
+        'desc': '🐟喜欢摸鱼，擅长睡觉，Toriest。'
+    }
+]
 
 app.config['upload_dir'] = 'static'
 @app.route('/')
@@ -40,7 +64,26 @@ def index():
                 resource_files.append(filename)
         resource_files.sort()
 
-    return render_template('index.html',selected_music = selected_music,resource_file = resource_files)
+    #取得友谊链接的状态。——在这里插入
+    friend_links_with_status = []
+    for link in FRIEND_LINKS:
+        try:
+            start = time.perf_counter()
+            r = requests.get(link['url'], timeout=5, allow_redirects=True)
+            ms = (time.perf_counter() - start) * 1000
+            status = f"[{r.status_code} {round(ms)}ms]"
+        except Exception as e:
+            print(f"检测友链 {link['url']} 失败: {e}")
+            status = "[离线]"
+
+        friend_links_with_status.append({
+            'name': link['name'],
+            'url': link['url'],
+            'desc': link['desc'],
+            'status': status
+        })
+
+    return render_template('index.html',selected_music = selected_music,resource_file = resource_files, friend_links = friend_links_with_status)
 
 @app.route('/notice')
 def notice():
@@ -130,7 +173,7 @@ def hidden():
     #隐藏页-系统信息
     flask_info = version('flask')
     python_info = sys.version
-    app_info = "SimpleDinoWeb Version: 26.4.0 (Design by Cream_MENGDU.)"
+    app_info = "SimpleDinoWeb Version: 26.9.28b (Design by Cream_MENGDU.)"
     #隐藏页-运行状态
     system_name = platform.system()
     system_release = platform.release()
@@ -180,7 +223,7 @@ if __name__ == '__main__':
     if options.version_info:
         print(f"Flask Version: {version('flask')}")
         print(f"Python Version: {sys.version}")
-        print("SimpleDinoWeb Version: 26.4.0 (Design by Cream_MENGDU.)")
+        print("SimpleDinoWeb Version: 26.9.28b (Design by Cream_MENGDU.)")
         #如果参数里包含-v或者--version，只输出版本信息而不启动。
         sys.exit(0)
 
