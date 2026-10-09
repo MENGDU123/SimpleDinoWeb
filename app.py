@@ -158,35 +158,27 @@ def index():
 
 @app.route('/notice')
 def notice():
+    #动态卡片：读取 static/notice 下的 .html 片段，按修改时间倒序插入页面
     notice_folder = os.path.join(app.config['upload_dir'], 'notice')
-    file_info = []
+    notice_cards = []
     if os.path.isdir(notice_folder):
+        html_files = []
         for filename in os.listdir(notice_folder):
+            if filename.endswith(".html"):
+                filepath = os.path.join(notice_folder, filename)
+                if os.path.isfile(filepath):
+                    html_files.append((filename, os.path.getmtime(filepath)))
+        #按修改时间倒序排序
+        html_files.sort(key=lambda x: x[1], reverse=True)
+        for filename, _ in html_files:
+            filepath = os.path.join(notice_folder, filename)
             try:
-                if filename.endswith(".html") or filename.endswith(".pdf"):
-                    filepath = os.path.join(notice_folder, filename)
-                    mtime = os.path.getmtime(filepath)
-                    time_str = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M')
-                    file_info.append((filename, time_str))
-            except FileNotFoundError:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    notice_cards.append(f.read())
+            except (OSError, UnicodeDecodeError):
                 continue
-        # 按修改时间倒序排序
-        file_info.sort(key=lambda x: os.path.getmtime(os.path.join(notice_folder, x[0])), reverse=True)
 
-    # 分页
-    PER_PAGE = 15
-    page = request.args.get('page', 1, type=int)
-    total = len(file_info)
-    total_pages = (total + PER_PAGE - 1) // PER_PAGE if total > 0 else 1
-    if page < 1:
-        page = 1
-    if page > total_pages and total_pages > 0:
-        page = total_pages
-    start = (page - 1) * PER_PAGE
-    end = start + PER_PAGE
-    page_files = file_info[start:end]   # 分页后的列表
-
-    return render_template('notice.html', notice_files=page_files, page=page, total_pages=total_pages)
+    return render_template('notice.html', notice_cards=notice_cards)
 
 @app.route('/nuoshui')
 def nuoshui():
