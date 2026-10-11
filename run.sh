@@ -19,4 +19,4 @@ fi
 if [ -z "$USER_ARGS" ]; then
     USER_ARGS="$DEFAULT_ARGS"
 fi
-python app.py $USER_ARGS 2>&1 | tee "$LOG_FILE"
+python3 app.py $USER_ARGS 2>&1 | tee "$LOG_FILE"
