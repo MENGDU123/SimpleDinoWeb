@@ -10,16 +10,17 @@ body {
 }
 
 a:link {
-  color:grey;
-  text-decoration:none;
- }
+  color: #595959;
+  text-decoration: none;
+}
 a:visited {
-  color:grey;
-  text-decoration:none;
-  }
-a:hover {
-  color:#FFA500;
-  text-decoration:none;
+  color: #595959;
+  text-decoration: none;
+}
+a:hover,
+a:focus {
+  color: #FFA500;
+  text-decoration: underline;
 }
 
 .card_main {

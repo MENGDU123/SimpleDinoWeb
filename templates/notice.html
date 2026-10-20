@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
     <title>地瓜盒</title>
-    <link rel="icon" type="img/ico" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 <body>
@@ -17,14 +17,14 @@
         </div>
         <br>
         <p style="text-indent: 2em;line-height: 1.8">
-            这是动态页面，这里所有的卡片都是通过python读取html文件，然后插入到下方的，因此地瓜盒并没有所谓的后台管理。
+            这是动态页面，这里所有的卡片都是通过 Python 读取 HTML 文件，然后插入到下方的，因此地瓜盒并没有所谓的后台管理。
         </p>
         <br>
         <hr>
         <br>
-        <a href="https://github.com/MENGDU123" target="_blank">Github（奶酪糖·梦都）</a>
+        <a href="https://github.com/MENGDU123" target="_blank" rel="noopener noreferrer">GitHub（奶酪糖·梦都）</a>
         <span style="float: right">
-            我是合法的 <a href="https://beian.miit.gov.cn/" target="_blank">苏ICP备2025174285号-1</a>
+            我是合法的 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">苏ICP备2025174285号-1</a>
         </span>
     </div>
         {% for content in notice_cards %}

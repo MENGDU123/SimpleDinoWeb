@@ -4,6 +4,7 @@ import random
 import json
 import requests
 from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import urlparse
 
 from flask import Flask, render_template, request, abort, jsonify
 from importlib.metadata import version
@@ -22,6 +23,8 @@ HEARTBEAT_INTERVAL = 30
 HEARTBEAT_JITTER = 15 #抖动时长
 CHECK_TIMEOUT = 5
 MAX_WORKERS = 4
+USER_AGENT = ('Mozilla/5.0 (compatible; SimpleDinoWeb/26.9.28b; '
+              '+https://www.kwymengdu.online/)')
 
 #存放状态缓存
 _friend_cache = {}
@@ -32,29 +35,40 @@ _stop_event = threading.Event()
 def _check_one(link):
     try:
         start = time.perf_counter()
-        r = requests.get(link['url'], timeout=CHECK_TIMEOUT, allow_redirects=True)
-        ms = (time.perf_counter() - start) * 1000
-        return link['url'], f"[{r.status_code} {round(ms)}ms]"
-    except Exception:
+        with requests.get(
+            link['url'],
+            timeout=CHECK_TIMEOUT,
+            allow_redirects=True,
+            stream=True,
+            headers={'User-Agent': USER_AGENT},
+        ) as response:
+            ms = (time.perf_counter() - start) * 1000
+            return link['url'], f"[{response.status_code} {round(ms)}ms]"
+    except requests.RequestException as exc:
+        app.logger.info("Friend link check failed for %s: %s", link['url'], exc)
         return link['url'], "[离线]"
 
 def _heartbeat_loop():
     """后台线程：每隔 HEARTBEAT_INTERVAL 秒刷新一次友链状态到缓存。"""
     while not _stop_event.is_set():
-        links = load_friend_links()          # 每轮都读一次，改 JSON 后下一轮即生效
-        if links:
-            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-                results = list(pool.map(_check_one, links))
+        try:
+            links = load_friend_links()          # 每轮都读一次，改 JSON 后下一轮即生效
+            results = []
+            if links:
+                with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+                    results = list(pool.map(_check_one, links))
 
-            now = time.time()
             valid_urls = {link['url'] for link in links}
             with _cache_lock:
                 for url, status in results:
-                    _friend_cache[url] = {'status': status, 'checked_at': now}
+                    _friend_cache[url] = {'status': status}
                 #清理已经从 JSON 里删掉的旧条目，防止缓存无限增长
                 for url in list(_friend_cache):
                     if url not in valid_urls:
                         del _friend_cache[url]
+        except Exception:
+            #后台线程不能因为单轮异常而退出
+            app.logger.exception("Friend-link heartbeat iteration failed")
 
         # 睡到下一轮，加随机抖动
         sleep_time = HEARTBEAT_INTERVAL + random.uniform(-HEARTBEAT_JITTER, HEARTBEAT_JITTER)
@@ -70,47 +84,63 @@ def start_heartbeat():
 #定义友链数据
 FRIEND_LINKS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'friendship_links.json')
 
-#友链文件缓存：按 mtime 判断是否需要重新解析
-_friend_links_cache = {'data': [], 'mtime': None}
+#友链文件缓存：按 (mtime_ns, size) 判断是否需要重新解析
+_friend_links_cache = {'data': [], 'signature': None}
 _friend_links_lock = threading.Lock()
 
 def load_friend_links():
     try:
-        mtime = os.path.getmtime(FRIEND_LINKS_FILE)
+        stat = os.stat(FRIEND_LINKS_FILE)
     except OSError:
         #文件不存在则视为空列表
         return []
 
+    signature = (stat.st_mtime_ns, stat.st_size)
     with _friend_links_lock:
-        if _friend_links_cache['mtime'] == mtime:
+        if _friend_links_cache['signature'] == signature:
             return _friend_links_cache['data']
 
     try:
         with open(FRIEND_LINKS_FILE, 'r', encoding='utf-8') as f:
             raw = json.load(f)
-    except (OSError, FileNotFoundError, ValueError):
+    except (OSError, ValueError) as exc:
+        app.logger.warning("Failed to load friend links: %s", exc)
         with _friend_links_lock:
             return _friend_links_cache['data']
 
     if isinstance(raw, dict):
         raw = raw.get('links', [])
     if not isinstance(raw, list):
+        app.logger.warning("Friend links file must contain a list")
         raw = []
 
     links = []
     for item in raw:
         if not isinstance(item, dict):
             continue
-        name = str(item.get('name', '')).strip()
-        url = str(item.get('url', '')).strip()
-        desc = str(item.get('desc', '')).strip()
+        name = item.get('name')
+        url = item.get('url')
+        desc = item.get('desc', '')
+        if not isinstance(name, str) or not isinstance(url, str):
+            continue
+        name = name.strip()
+        url = url.strip()
+        desc = desc.strip() if isinstance(desc, str) else ''
         if not name or not url:
+            continue
+        try:
+            parsed = urlparse(url)
+        except ValueError:
+            app.logger.warning("Ignoring friend link with invalid URL: %s", url)
+            continue
+        if parsed.scheme.lower() not in ('http', 'https') or not parsed.netloc:
+            app.logger.warning("Ignoring friend link with invalid URL: %s", url)
             continue
         links.append({'name': name, 'url': url, 'desc': desc})
 
     with _friend_links_lock:
         _friend_links_cache['data'] = links
-        _friend_links_cache['mtime'] = mtime
+        _friend_links_cache['signature'] = signature
     return links
 
 app.config['upload_dir'] = 'static'
@@ -293,7 +323,7 @@ if __name__ == '__main__':
     if not options.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         start_heartbeat()
 
-    print("Please use nginx to proxy the application, or use a WSGI server directly..")
+    print("Please use nginx to proxy the application, or use a WSGI server directly.")
     app.run(host=options.ip, port=options.port,debug=options.debug)
 
 

@@ -1,8 +1,23 @@
+# Python
 .venv/
+__pycache__/
+*.py[cod]
+
+# 编辑器 / 系统
+.idea/
+.DS_Store
+
+# 本地启动参数（该文件目前仍被 Git 跟踪；若要改为仅本地使用，先执行 git rm --cached user_args.txt）
+user_args.txt
+
+# 运行时内容（体积较大，部署时单独同步）
+static/music/
 static/resource/
 static/nuoshui/
-static/hidden/
-.idea/
-static/music/
-user_args.txt
+
+# 运行日志（保留目录，忽略内容）
+static/hidden/*
+!static/hidden/.gitkeep
+
+# 其他
 .zcode/
